@@ -1,5 +1,5 @@
 import { createStackNavigator } from "react-navigation-stack";
-import { createAppContainer } from "react-navigation";
+import { createAppContainer, createSwitchNavigator } from "react-navigation";
 import { createBottomTabNavigator } from "react-navigation-tabs";
 import { createDrawerNavigator } from "react-navigation-drawer";
 import { Platform } from "react-native";
@@ -12,7 +12,10 @@ import Colors from "../constants/Colors";
 import CartScreen from "../screens/shop/CartScreen";
 import OrdersScreen from "../screens/shop/OrdersScreen";
 import MypageScreen from "../screens/user/MypageScreen";
-import LoginScreen from "../screens/user/LoginScreen";
+import AuthScreen from "../screens/user/AuthScreen";
+import MyShopsScreen from "../screens/user/MyShopsScreen";
+import ShopRegisterScreen from "../screens/user/ShopRegisterScreen";
+import StartScreen from "../screens/StartScreen";
 
 const defaultNavOptions = {
   headerStyle: {
@@ -64,15 +67,52 @@ const OrdersNavigator = createStackNavigator(
   }
 );
 
+// const AuthNavigator = createStackNavigator({
+//   Auth: AuthScreen,
+// });
+
 const MypageNavigator = createStackNavigator(
   {
-    Login: LoginScreen,
-    // Mypage: MypageScreen,
+    Mypage: {
+      screen: MypageScreen,
+      navigationOptions: { headerShown: false },
+    },
+    MyShops: {
+      screen: MyShopsScreen,
+      navigationOptions: {
+        headerShown: true,
+        headerTitle: "카페 관리",
+        headerBackTitleVisible: false,
+      },
+    },
+    ShopRegister: {
+      screen: ShopRegisterScreen,
+      navigationOptions: {
+        headerShown: true,
+        headerTitle: "카페 등록",
+        headerBackTitleVisible: false,
+      },
+    },
   },
   {
     defaultNavigationOptions: defaultNavOptions,
   }
 );
+
+const AuthCheckNavigator = createSwitchNavigator({
+  Auth: AuthScreen,
+  Mypage: MypageNavigator,
+});
+
+MypageNavigator.navigationOptions = ({ navigation }) => {
+  let tabBarVisible = true;
+  if (navigation.state.index > 0) {
+    tabBarVisible = false;
+  }
+  return {
+    tabBarVisible,
+  };
+};
 
 const ShopOverviewNavigator = createBottomTabNavigator(
   {
@@ -98,7 +138,7 @@ const ShopOverviewNavigator = createBottomTabNavigator(
       },
     },
     Mypage: {
-      screen: MypageNavigator,
+      screen: AuthCheckNavigator,
       navigationOptions: {
         tabBarIcon: (tabInfo) => {
           return <Ionicons name="ios-clipboard" size={24} color="black" />;
@@ -119,4 +159,9 @@ const ShopOverviewNavigator = createBottomTabNavigator(
   }
 );
 
-export default createAppContainer(ShopOverviewNavigator);
+const MainNavigator = createSwitchNavigator({
+  Start: StartScreen,
+  Shop: ShopOverviewNavigator,
+});
+
+export default createAppContainer(MainNavigator);

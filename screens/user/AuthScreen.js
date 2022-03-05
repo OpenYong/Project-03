@@ -4,10 +4,13 @@ import {
   View,
   KeyboardAvoidingView,
   TouchableOpacity,
+  ActivityIndicator,
   Button,
+  Alert,
 } from "react-native";
-import React, { useCallback, useReducer } from "react";
+import React, { useCallback, useReducer, useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import Input from "../../components/UI/Input";
 
@@ -40,19 +43,57 @@ const formReducer = (state, action) => {
   return state;
 };
 
-const LoginScreen = (props) => {
+const AuthScreen = (props) => {
   const dispatch = useDispatch();
+  const [isLogin, setIsLogin] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState();
+
   const [formState, dispatchFormState] = useReducer(formReducer, {
     inputValues: {
       email: "",
       password: "",
+      name: "",
     },
     inputValidities: {
       email: false,
       password: false,
+      name: false,
     },
     formIsValid: false,
   });
+
+  useEffect(() => {
+    const loginFunc = async () => {
+      const userData = await AsyncStorage.getItem("userData");
+      if (!userData) {
+        props.navigation.navigate("Auth");
+        return;
+      }
+      const transformedData = JSON.parse(userData);
+      const { token, userId, expDate } = transformedData;
+
+      const expirationDate = new Date(expDate);
+
+      if (!token || !userId || expirationDate <= new Date()) {
+        props.navigation.navigate("Auth");
+        return;
+      }
+
+      props.navigation.navigate("Mypage");
+      dispatch(authActions.authenticate(userId, token));
+    };
+
+    loginFunc();
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (error) {
+      Alert.alert(isLogin ? "로그인 실패" : "회원가입 실패", error, [
+        { text: "확인" },
+      ]);
+    }
+  }, [error]);
 
   const changeHandler = useCallback(
     (inputId, inputValue, inputValiditiy) => {
@@ -66,13 +107,34 @@ const LoginScreen = (props) => {
     [dispatchFormState]
   );
 
-  const loginHandler = () => {
-    dispatch(
-      authActions.login(
+  const authHandler = async () => {
+    let action;
+    if (isLogin) {
+      action = authActions.login(
         formState.inputValues.email,
-        formState.inputValues.password
-      )
-    );
+        formState.inputValues.password,
+        formState.inputValues.name
+      );
+    } else {
+      action = authActions.signup(
+        formState.inputValues.email,
+        formState.inputValues.password,
+        formState.inputValues.name
+      );
+    }
+    setError(null);
+    setIsLoading(true);
+    try {
+      await dispatch(action);
+      if (isLogin) {
+        props.navigation.navigate("Mypage");
+      } else {
+        props.navigation.navigate("Auth");
+      }
+    } catch (error) {
+      setError(error.message);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -86,7 +148,7 @@ const LoginScreen = (props) => {
         label="이메일"
         placeholder="이메일 입력 "
         errorText="올바른 이메일을 입력해주세요."
-        keyboardType="E-Mail"
+        keyboardType="email-address"
         returnKeyType="next"
         autoCapitalize="none"
         onInputChange={changeHandler}
@@ -106,26 +168,46 @@ const LoginScreen = (props) => {
         // initialValue=''
         // initialValidity={false}
       />
+      {!isLogin && (
+        <Input
+          id="name"
+          label="이름"
+          placeholder="이름 입력 "
+          errorText="이름을 입력해주세요."
+          keyboardType="default"
+          returnKeyType="done"
+          onInputChange={changeHandler}
+          required
+          // initialValue=''
+          // initialValidity={false}
+        />
+      )}
       <View style={styles.buttonContainer}>
-        <Button title="로그인" color="white" onPress={loginHandler} />
+        {isLoading ? (
+          <ActivityIndicator size="small" color="white" />
+        ) : (
+          <Button
+            title={isLogin ? "로그인" : "회원가입"}
+            style={styles.buttonContainer}
+            color="white"
+            onPress={authHandler}
+          />
+        )}
       </View>
-      <View style={styles.buttonContainer}>
+      <Text>
+        {isLogin ? `처음이신가요?` : `계정이 있으신가요?`}
         <Button
-          title="회원가입"
-          style={styles.buttonContainer}
-          color="white"
+          title={isLogin ? `회원가입` : `로그인`}
           onPress={() => {
-            props.navigation.navigate({
-              routeName: "Signup",
-            });
+            setIsLogin((prevState) => !prevState);
           }}
         />
-      </View>
+      </Text>
     </KeyboardAvoidingView>
   );
 };
 
-export default LoginScreen;
+export default AuthScreen;
 
 const styles = StyleSheet.create({
   screen: {

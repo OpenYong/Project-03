@@ -11,20 +11,20 @@ const ShopOverviewScreen = (props) => {
   return (
     <FlatList
       data={shops}
-      keyExtractor={(item) => item.id}
-      renderItem={(itemData) => (
+      keyExtractor={(shop) => shop.id}
+      renderItem={(shopData) => (
         <ShopList
-          image={itemData.item.imageUrl}
-          shopName={itemData.item.shopName}
-          description={itemData.item.description}
-          hasParkingLot={itemData.item.hasParkingLot}
-          hasTables={itemData.item.hasTables}
+          image={shopData.item.imageUrl}
+          shopName={shopData.item.shopName}
+          description={shopData.item.description}
+          hasParkingLot={shopData.item.hasParkingLot}
+          hasTables={shopData.item.hasTables}
           onSelect={() => {
             props.navigation.navigate({
               routeName: "ItemsOverview",
               params: {
-                shopId: itemData.item.id,
-                shopName: itemData.item.shopName,
+                shopId: shopData.item.id,
+                shopName: shopData.item.shopName,
               },
             });
           }}
