@@ -11,7 +11,7 @@ const StartScreen = (props) => {
     const loginFunc = async () => {
       const userData = await AsyncStorage.getItem("userData");
       if (!userData) {
-        props.navigation.navigate("Mypage");
+        props.navigation.navigate("Auth");
         return;
       }
       const transformedData = JSON.parse(userData);
@@ -20,7 +20,7 @@ const StartScreen = (props) => {
       const expirationDate = new Date(expDate);
 
       if (!token || !userId || expirationDate <= new Date()) {
-        props.navigation.navigate("Mypage");
+        props.navigation.navigate("Auth");
         return;
       }
 

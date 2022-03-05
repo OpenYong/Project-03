@@ -1,9 +1,12 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+
+import * as authActions from "../../store/actions/auth";
 
 const MypageScreen = (props) => {
   const userId = useSelector((state) => state.auth.userId);
+  const dispatch = useDispatch();
 
   return (
     <View style={styles.mainContainer}>
@@ -25,6 +28,16 @@ const MypageScreen = (props) => {
       <TouchableOpacity>
         <View style={styles.lists}>
           <Text>설정</Text>
+        </View>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => {
+          dispatch(authActions.logout());
+          props.navigation.navigate("Auth");
+        }}
+      >
+        <View style={styles.lists}>
+          <Text>로그아웃</Text>
         </View>
       </TouchableOpacity>
     </View>
